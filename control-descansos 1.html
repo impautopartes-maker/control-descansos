@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control de Descansos</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.10.0/dist/tabler-icons.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f0f1a;--bg2:#16162a;--card:#1e1e35;--card2:#252540;
+  --border:#2e2e50;--border-lite:#3a3a60;
+  --accent:#f59e0b;--accent2:#fbbf24;--accent-dim:rgba(245,158,11,0.12);
+  --green:#10b981;--green-dim:rgba(16,185,129,0.12);
+  --red:#ef4444;--red-dim:rgba(239,68,68,0.12);
+  --orange:#f97316;--orange-dim:rgba(249,115,22,0.12);
+  --text:#f0f0ff;--text2:#a0a0c0;--text3:#606080;
+  --radius:18px;--radius-sm:12px;--radius-xs:8px;
+}
+body{font-family:'Sora',sans-serif;background:var(--bg);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:28px 16px 40px;position:relative;overflow-x:hidden;}
+body::before,body::after{content:'';position:fixed;border-radius:50%;filter:blur(80px);pointer-events:none;z-index:0;}
+body::before{width:400px;height:400px;background:radial-gradient(circle,rgba(245,158,11,0.08),transparent 70%);top:-80px;right:-80px;}
+body::after{width:350px;height:350px;background:radial-gradient(circle,rgba(102,126,234,0.07),transparent 70%);bottom:-60px;left:-60px;}
+.wrap{width:100%;max-width:500px;position:relative;z-index:1}
+.header{text-align:center;margin-bottom:24px}
+.header-badge{display:inline-flex;align-items:center;gap:7px;background:var(--accent-dim);border:1px solid rgba(245,158,11,0.25);border-radius:99px;padding:6px 14px;margin-bottom:14px;}
+.header-badge span{font-size:11px;font-weight:600;color:var(--accent);letter-spacing:0.08em;text-transform:uppercase}
+.header h1{font-size:26px;font-weight:800;color:var(--text);letter-spacing:-0.02em;line-height:1.2}
+.header h1 em{font-style:normal;color:var(--accent)}
+#company-sub{font-size:13px;color:var(--text3);margin-top:5px;font-weight:400}
+.clock-bar{display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px 18px;margin-bottom:16px;}
+.clock-left{display:flex;align-items:baseline;gap:8px}
+.clock-time{font-size:22px;font-weight:700;color:var(--text);font-family:'JetBrains Mono',monospace;letter-spacing:0.02em;}
+.clock-ampm{font-size:12px;font-weight:500;color:var(--accent)}
+.clock-date{font-size:12px;color:var(--text3)}
+.clock-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.85)}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.view-tabs{display:flex;border-bottom:1px solid var(--border);}
+.vtab{flex:1;padding:14px 8px;font-size:13px;font-weight:500;color:var(--text3);background:none;border:none;cursor:pointer;font-family:'Sora',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s;}
+.vtab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.vtab:hover:not(.active){color:var(--text2)}
+.selector-wrap{padding:32px 24px;text-align:center}
+.selector-emoji{font-size:44px;display:block;margin-bottom:14px;line-height:1}
+.selector-wrap h2{font-size:19px;font-weight:700;color:var(--text);margin-bottom:5px}
+.selector-wrap p{font-size:13px;color:var(--text3);margin-bottom:20px}
+select,input[type="text"],input[type="password"],textarea{width:100%;padding:12px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-xs);font-size:14px;font-family:'Sora',sans-serif;color:var(--text);outline:none;transition:border-color .2s;display:block;}
+select:focus,input:focus,textarea:focus{border-color:var(--accent)}
+select option{background:var(--bg2)}
+.btn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:13px 18px;border:none;border-radius:var(--radius-xs);font-size:14px;font-weight:600;font-family:'Sora',sans-serif;cursor:pointer;transition:all .2s;}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#1a0f00;box-shadow:0 4px 20px rgba(245,158,11,0.25);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 26px rgba(245,158,11,0.35)}
+.btn-ghost{background:var(--card2);color:var(--text2);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:rgba(239,68,68,0.1);color:var(--red);border:1px solid rgba(239,68,68,0.2)}
+.btn-danger:hover{background:rgba(239,68,68,0.2)}
+.btn-sm{width:auto;padding:7px 13px;font-size:12px}
+.btn-icon{width:44px;height:44px;flex-shrink:0;border-radius:var(--radius-xs);background:linear-gradient(135deg,var(--accent),var(--accent2));color:#1a0f00;font-size:20px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(245,158,11,0.25);transition:all .2s;}
+.btn-icon:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(245,158,11,0.35)}
+.worker-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);}
+.worker-pill{display:flex;align-items:center;gap:10px}
+.worker-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#1a0f00;flex-shrink:0;}
+.worker-name-text{font-size:15px;font-weight:600;color:var(--text)}
+.worker-date-text{font-size:11px;color:var(--text3);margin-top:2px}
+.btn-chg{font-size:11px;font-weight:500;color:var(--text3);background:none;border:1px solid var(--border);padding:5px 10px;border-radius:99px;cursor:pointer;font-family:'Sora',sans-serif;display:flex;align-items:center;gap:4px;transition:all .2s;}
+.btn-chg:hover{color:var(--accent);border-color:var(--accent)}
+.breaks-list{padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+
+/* ── BREAK ROW ── */
+.break-row{border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--bg);transition:all .3s;overflow:hidden;}
+.break-row.done{border-color:rgba(16,185,129,0.3);background:var(--green-dim)}
+.break-row.running{border-color:var(--accent);background:var(--accent-dim);animation:glowPulse 2s ease-in-out infinite;}
+.break-row.overtime{border-color:var(--red);background:var(--red-dim);animation:glowRed 1s ease-in-out infinite;}
+@keyframes glowPulse{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,0.15)}50%{box-shadow:0 0 16px 4px rgba(245,158,11,0.2)}}
+@keyframes glowRed{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.2)}50%{box-shadow:0 0 16px 4px rgba(239,68,68,0.3)}}
+.break-top{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;}
+.break-left{display:flex;align-items:center;gap:12px}
+.break-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.bi-morning{background:rgba(251,191,36,0.1);color:#fbbf24}
+.bi-lunch{background:rgba(59,130,246,0.1);color:#60a5fa}
+.bi-afternoon{background:rgba(167,139,250,0.1);color:#a78bfa}
+.bi-done{background:var(--green-dim);color:var(--green)}
+.bi-running{background:var(--accent-dim);color:var(--accent)}
+.bi-overtime{background:var(--red-dim);color:var(--red)}
+.break-label{font-size:14px;font-weight:600;color:var(--text)}
+.break-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.btn-mark{padding:8px 15px;border-radius:99px;border:1.5px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:12px;font-weight:600;font-family:'Sora',sans-serif;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.btn-mark:hover{background:var(--accent);color:#1a0f00}
+.btn-mark:disabled{opacity:0.4;cursor:not-allowed}
+.time-chip{font-size:13px;font-weight:600;color:var(--green);background:var(--green-dim);border:1px solid rgba(16,185,129,0.2);padding:5px 12px;border-radius:99px;font-family:'JetBrains Mono',monospace;white-space:nowrap;}
+
+/* ── COUNTDOWN BAR ── */
+.countdown-wrap{padding:0 16px 14px;}
+.countdown-inner{background:var(--bg2);border-radius:var(--radius-xs);padding:10px 14px;}
+.countdown-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.countdown-label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;display:flex;align-items:center;gap:5px;}
+.countdown-time{font-size:20px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--accent);}
+.countdown-time.warn{color:var(--orange)}
+.countdown-time.over{color:var(--red)}
+.progress-bar{height:6px;background:var(--border);border-radius:99px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:99px;transition:width .9s linear,background .5s;}
+.pf-ok{background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.pf-warn{background:linear-gradient(90deg,var(--orange),#fb923c)}
+.pf-over{background:var(--red)}
+
+/* ── OVERTIME BANNER ── */
+.overtime-banner{margin:0 16px 14px;background:var(--red-dim);border:1px solid rgba(239,68,68,0.3);border-radius:var(--radius-xs);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:9px;font-size:13px;font-weight:600;color:var(--red);}
+.btn-return{padding:7px 14px;border-radius:99px;border:1.5px solid var(--green);background:var(--green-dim);color:var(--green);font-size:12px;font-weight:700;font-family:'Sora',sans-serif;cursor:pointer;transition:all .2s;white-space:nowrap;flex-shrink:0;}
+.btn-return:hover{background:var(--green);color:#0a3d2b}
+.break-row.returned{border-color:rgba(16,185,129,0.3);background:var(--green-dim);animation:none;}
+.returned-footer{margin:0 16px 14px;background:var(--green-dim);border:1px solid rgba(16,185,129,0.25);border-radius:var(--radius-xs);padding:10px 14px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--green);}
+
+/* ── ALARM OVERLAY ── */
+#alarm-overlay{position:fixed;inset:0;z-index:999;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);}
+#alarm-overlay.show{display:flex}
+.alarm-card{background:var(--card);border:2px solid var(--red);border-radius:var(--radius);padding:32px 28px;max-width:340px;width:90%;text-align:center;animation:alarmPop .3s cubic-bezier(.34,1.56,.64,1);}
+@keyframes alarmPop{from{opacity:0;transform:scale(0.8)}to{opacity:1;transform:scale(1)}}
+.alarm-emoji{font-size:56px;display:block;margin-bottom:12px;animation:shake 0.5s ease-in-out infinite;}
+@keyframes shake{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+.alarm-title{font-size:22px;font-weight:800;color:var(--red);margin-bottom:6px}
+.alarm-sub{font-size:14px;color:var(--text2);margin-bottom:22px;line-height:1.5}
+.alarm-worker{font-weight:700;color:var(--text)}
+
+/* ADMIN */
+.admin-subtabs{display:flex;border-bottom:1px solid var(--border);padding:0 18px;gap:0;}
+.astab{padding:12px 14px;font-size:12px;font-weight:600;color:var(--text3);background:none;border:none;cursor:pointer;font-family:'Sora',sans-serif;display:flex;align-items:center;gap:5px;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s;text-transform:uppercase;letter-spacing:0.04em;}
+.astab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.astab:hover:not(.active){color:var(--text2)}
+.metrics-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.metric-box{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 10px;text-align:center;}
+.metric-num{font-size:26px;font-weight:800;color:var(--accent);line-height:1}
+.metric-lbl{font-size:10px;color:var(--text3);margin-top:4px;font-weight:500;text-transform:uppercase;letter-spacing:0.05em}
+.date-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.date-nav-btn{width:34px;height:34px;border-radius:var(--radius-xs);border:1px solid var(--border);background:var(--bg);cursor:pointer;color:var(--text3);font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.date-nav-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.date-nav-btn:disabled{opacity:0.3;cursor:not-allowed}
+.date-label{font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
+.today-badge{font-size:9px;font-weight:700;background:var(--accent);color:#1a0f00;padding:2px 8px;border-radius:99px;letter-spacing:0.06em;}
+.table-wrap{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;}
+table{width:100%;border-collapse:collapse}
+thead th{padding:9px 12px;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid var(--border);background:var(--card2);}
+td{padding:11px 12px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text);vertical-align:middle;}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,0.015)}
+td:not(:first-child){text-align:center}
+.badge-yes{font-size:11px;font-weight:600;background:var(--green-dim);color:var(--green);padding:4px 10px;border-radius:99px;border:1px solid rgba(16,185,129,0.2);font-family:'JetBrains Mono',monospace;display:inline-block;}
+.badge-no{font-size:16px;color:var(--text3);display:block}
+.workers-list{border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border)}
+.worker-item{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid var(--border);background:var(--bg);transition:background .2s;}
+.worker-item:last-child{border-bottom:none}
+.worker-item:hover{background:var(--card2)}
+.wi-left{display:flex;align-items:center;gap:10px}
+.wa{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#1a0f00;flex-shrink:0;}
+.wi-name{font-size:13px;font-weight:500;color:var(--text)}
+.input-row{display:flex;gap:8px;margin-top:10px}
+.input-row input{flex:1}
+.settings-block{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;margin-bottom:12px;}
+.settings-block h3{font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.settings-block h3 i{color:var(--accent)}
+.err{font-size:12px;color:var(--red);min-height:18px;margin:7px 0}
+.ok-msg{font-size:12px;color:var(--green);min-height:18px;margin:7px 0}
+.empty{text-align:center;padding:32px 20px}
+.empty i{font-size:36px;color:var(--text3);display:block;margin-bottom:9px}
+.empty p{font-size:13px;color:var(--text3);line-height:1.6}
+.setup-box{background:rgba(245,158,11,0.05);border:1.5px dashed rgba(245,158,11,0.3);border-radius:var(--radius-xs);padding:14px;margin-bottom:12px;font-size:12px;color:var(--text2);line-height:1.7;}
+.setup-box strong{color:var(--accent)}
+.setup-box a{color:var(--accent);text-decoration:none}
+.setup-box code{background:var(--card2);padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent2);}
+.connected-badge{display:inline-flex;align-items:center;gap:5px;background:var(--green-dim);border:1px solid rgba(16,185,129,0.25);border-radius:99px;padding:4px 10px;font-size:11px;font-weight:600;color:var(--green);}
+.pad{padding:16px 18px}.pad-sm{padding:12px 18px}.mt8{margin-top:8px}.mt12{margin-top:12px}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.fi{animation:fi .25s ease}
+.footer{text-align:center;margin-top:20px;font-size:11px;color:var(--text3);display:flex;align-items:center;justify-content:center;gap:6px;}
+.footer-dot{width:4px;height:4px;border-radius:50%;background:var(--text3);display:inline-block}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border-lite);border-radius:4px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- ALARM OVERLAY -->
+<div id="alarm-overlay">
+  <div class="alarm-card">
+    <span class="alarm-emoji" id="alarm-emoji">⏰</span>
+    <div class="alarm-title" id="alarm-title">¡Tiempo agotado!</div>
+    <div class="alarm-sub" id="alarm-sub">El descanso de <span class="alarm-worker" id="alarm-worker"></span> ha terminado.</div>
+    <button class="btn btn-primary" onclick="closeAlarm()"><i class="ti ti-check"></i> Entendido</button>
+  </div>
+</div>
+
+<div class="wrap fi">
+  <div class="header">
+    <div class="header-badge">
+      <i class="ti ti-coffee" style="color:var(--accent);font-size:13px;"></i>
+      <span>Break Control</span>
+    </div>
+    <h1>Registro de <em>Descansos</em></h1>
+    <p id="company-sub">Cargando...</p>
+  </div>
+
+  <div class="clock-bar">
+    <div class="clock-left">
+      <span class="clock-time" id="clk">00:00:00</span>
+      <span class="clock-ampm" id="clk-ampm">AM</span>
+    </div>
+    <div style="text-align:right">
+      <p class="clock-date" id="clk-date"></p>
+      <div style="display:flex;align-items:center;justify-content:flex-end;gap:5px;margin-top:4px">
+        <div class="clock-dot"></div>
+        <span style="font-size:10px;color:var(--green);font-weight:600">EN LÍNEA</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="view-tabs">
+      <button class="vtab active" id="vt-w" onclick="setView('worker')">
+        <i class="ti ti-user-circle" style="font-size:15px"></i> Mi turno
+      </button>
+      <button class="vtab" id="vt-a" onclick="setView('admin')">
+        <i class="ti ti-shield-lock" style="font-size:15px"></i> Administración
+      </button>
+    </div>
+    <div id="v-worker" class="fi"></div>
+    <div id="v-admin" style="display:none" class="fi"></div>
+  </div>
+
+  <div class="footer">
+    <span id="store-status">Almacenamiento local</span>
+    <span class="footer-dot"></span>
+    <span>Break Control v3.0</span>
+  </div>
+</div>
+
+<script>
+const TZ='America/Bogota';
+const BREAKS=[
+  {key:'bm',label:'Brake Mañana',sub:'15 minutos',ic:'bi-morning',icon:'ti-sun',   mins:15},
+  {key:'al',label:'Almuerzo',    sub:'1 hora',     ic:'bi-lunch',  icon:'ti-bowl',  mins:60},
+  {key:'bt',label:'Brake Tarde', sub:'15 minutos', ic:'bi-afternoon',icon:'ti-sunset-2',mins:15},
+];
+const K={workers:'bkctrl_workers',pwd:'bkctrl_pwd',company:'bkctrl_company',fb:'bkctrl_firebase'};
+const DEFAULT_PWD='admin2025';
+
+let view='worker',workerName='',adminIn=false,adminTab='records',viewDate='';
+let fbReady=false,fbDb,fbRef,fbGet,fbSet;
+let countdownInterval=null;
+let alarmFiredToday={};   // {workerKey_breakKey: true}
+let alarmQueue=[];
+let alarmActive=false;
+let audioCtx=null;
+
+function today(){return new Date().toLocaleDateString('en-CA',{timeZone:TZ});}
+function nowTime(){return new Date().toLocaleTimeString('es-CO',{timeZone:TZ,hour:'2-digit',minute:'2-digit',hour12:true});}
+function fmtDate(d){const[y,m,day]=d.split('-');const M=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];return `${parseInt(day)} de ${M[parseInt(m)-1]}, ${y}`;}
+function initials(name){return name.trim().charAt(0).toUpperCase();}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ── CLOCK ──────────────────────────────────────────────────────────────────
+function tick(){
+  const now=new Date();
+  const t=now.toLocaleTimeString('es-CO',{timeZone:TZ,hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});
+  const parts=t.split(' ');const ampm=parts[parts.length-1];const hms=parts[0];
+  document.getElementById('clk').textContent=hms;
+  document.getElementById('clk-ampm').textContent=ampm||'';
+  const date=now.toLocaleDateString('es-CO',{timeZone:TZ,weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('clk-date').textContent=date.charAt(0).toUpperCase()+date.slice(1);
+}
+setInterval(tick,1000);tick();
+
+// ── AUDIO ──────────────────────────────────────────────────────────────────
+function getAudioCtx(){
+  if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  return audioCtx;
+}
+function playAlarmSound(){
+  try{
+    const ctx=getAudioCtx();
+    const pattern=[880,0,880,0,1100,0,1100,0,880];
+    let t=ctx.currentTime;
+    pattern.forEach((freq,i)=>{
+      if(freq===0){t+=0.07;return;}
+      const osc=ctx.createOscillator();
+      const gain=ctx.createGain();
+      osc.connect(gain);gain.connect(ctx.destination);
+      osc.type='square';osc.frequency.value=freq;
+      gain.gain.setValueAtTime(0,t);
+      gain.gain.linearRampToValueAtTime(0.18,t+0.02);
+      gain.gain.linearRampToValueAtTime(0,t+0.15);
+      osc.start(t);osc.stop(t+0.15);
+      t+=0.18;
+    });
+  }catch(e){console.log('Audio:',e);}
+}
+function playWarningBeep(){
+  try{
+    const ctx=getAudioCtx();
+    const osc=ctx.createOscillator();
+    const gain=ctx.createGain();
+    osc.connect(gain);gain.connect(ctx.destination);
+    osc.type='sine';osc.frequency.value=660;
+    gain.gain.setValueAtTime(0,ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.12,ctx.currentTime+0.02);
+    gain.gain.linearRampToValueAtTime(0,ctx.currentTime+0.3);
+    osc.start(ctx.currentTime);osc.stop(ctx.currentTime+0.3);
+  }catch{}
+}
+
+// ── ALARM OVERLAY ──────────────────────────────────────────────────────────
+function showAlarm(workerName,breakLabel,isOvertime){
+  const ol=document.getElementById('alarm-overlay');
+  document.getElementById('alarm-emoji').textContent=isOvertime?'🚨':'⏰';
+  document.getElementById('alarm-title').textContent=isOvertime?'¡Tiempo excedido!':'¡Descanso terminado!';
+  document.getElementById('alarm-sub').innerHTML=`El descanso de <strong class="alarm-worker">${esc(workerName)}</strong><br>(<em>${esc(breakLabel)}</em>) ha terminado.`;
+  ol.classList.add('show');
+  playAlarmSound();
+}
+function closeAlarm(){
+  document.getElementById('alarm-overlay').classList.remove('show');
+  alarmActive=false;
+  if(alarmQueue.length>0){
+    const next=alarmQueue.shift();
+    setTimeout(()=>{alarmActive=true;showAlarm(next.worker,next.label,next.over);},400);
+  }
+}
+function triggerAlarm(worker,breakKey,breakLabel,over){
+  const id=`${today()}_${worker}_${breakKey}`;
+  if(alarmFiredToday[id])return;
+  alarmFiredToday[id]=true;
+  if(alarmActive){alarmQueue.push({worker,label:breakLabel,over});return;}
+  alarmActive=true;
+  showAlarm(worker,breakLabel,over);
+}
+
+// ── COUNTDOWN LOGIC ────────────────────────────────────────────────────────
+// Returns seconds elapsed since the break was marked, using stored epoch timestamp
+function getSecondsElapsed(markedTs){
+  // markedTs is epoch ms (Date.now() at the moment of marking)
+  return Math.floor((Date.now()-Number(markedTs))/1000);
+}
+function fmtCountdown(sec){
+  const abs=Math.abs(sec);
+  const m=Math.floor(abs/60);
+  const s=abs%60;
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+// ── STORAGE ────────────────────────────────────────────────────────────────
+function lsGet(key,def=null){try{const v=localStorage.getItem(key);return v===null?def:JSON.parse(v);}catch{return def;}}
+function lsSet(key,val){try{localStorage.setItem(key,JSON.stringify(val));}catch{}}
+async function initFirebase(){
+  const cfg=lsGet(K.fb);if(!cfg)return false;
+  try{
+    const {initializeApp,getApps}=await import('https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js');
+    const {getDatabase,ref,get,set}=await import('https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js');
+    const app=getApps().length?getApps()[0]:initializeApp(cfg);
+    fbDb=getDatabase(app);fbRef=ref;fbGet=get;fbSet=set;fbReady=true;
+    document.getElementById('store-status').textContent='🔥 Firebase activo — sincronizado';
+    return true;
+  }catch(e){console.error('Firebase:',e);return false;}
+}
+async function getWorkers(){
+  if(fbReady){try{const s=await fbGet(fbRef(fbDb,'workers'));return s.val()?Object.values(s.val()):[];}catch{return[];}}
+  return lsGet(K.workers,[]);
+}
+async function saveWorkers(list){
+  lsSet(K.workers,list);
+  if(fbReady){const obj={};list.forEach((w,i)=>obj[`w${i}`]=w);try{await fbSet(fbRef(fbDb,'workers'),obj);}catch{}}
+}
+async function getRecs(date){
+  if(fbReady){try{const s=await fbGet(fbRef(fbDb,`records/${date}`));return s.val()||{};}catch{return{};}}
+  return lsGet(`bkctrl_recs_${date}`,{});
+}
+async function saveRecs(date,data){
+  lsSet(`bkctrl_recs_${date}`,data);
+  if(fbReady){try{await fbSet(fbRef(fbDb,`records/${date}`),data);}catch{}}
+}
+async function markBreak(worker,key){
+  const recs=await getRecs(today());
+  if(recs[worker]?.[key])return false;
+  if(!recs[worker])recs[worker]={};
+  recs[worker][key]=nowTime();
+  recs[worker][key+'_ts']=Date.now(); // epoch ms → countdown starts from HERE
+  await saveRecs(today(),recs);
+  return true;
+}
+async function markReturn(worker,key){
+  const recs=await getRecs(today());
+  if(!recs[worker]?.[key])return false;
+  if(recs[worker][key+'_ret'])return false;
+  recs[worker][key+'_ret']=nowTime();
+  recs[worker][key+'_ret_ts']=Date.now();
+  await saveRecs(today(),recs);
+  return true;
+}
+function getPwd(){return lsGet(K.pwd,DEFAULT_PWD)||DEFAULT_PWD;}
+function setPwd(p){lsSet(K.pwd,p);}
+function getCompany(){return lsGet(K.company,'Mi Empresa')||'Mi Empresa';}
+function setCompany(n){lsSet(K.company,n);}
+
+// ── COUNTDOWN RENDERER (called every second) ───────────────────────────────
+function updateCountdowns(){
+  if(view!=='worker'||!workerName)return;
+  BREAKS.forEach(b=>{
+    const wrap=document.getElementById(`cd-wrap-${b.key}`);
+    const row=document.getElementById(`row-${b.key}`);
+    if(!wrap||!row)return;
+    const ts=Number(wrap.dataset.ts||0);
+    if(!ts)return;
+    // Skip if already returned
+    if(wrap.dataset.ret==='1')return;
+    const totalSecs=b.mins*60;
+    const elapsed=getSecondsElapsed(ts);
+    const remaining=totalSecs-elapsed;
+    const pct=Math.min(100,Math.max(0,(elapsed/totalSecs)*100));
+    const isOver=remaining<=0;
+    const isWarn=remaining>0&&remaining<=120;
+
+    const timeEl=wrap.querySelector('.countdown-time');
+    const fillEl=wrap.querySelector('.progress-fill');
+    const labelEl=wrap.querySelector('.cd-status');
+    if(timeEl){
+      timeEl.textContent=isOver?`+${fmtCountdown(remaining)}`:fmtCountdown(remaining);
+      timeEl.className='countdown-time'+(isOver?' over':isWarn?' warn':'');
+    }
+    if(fillEl){
+      fillEl.style.width=`${pct}%`;
+      fillEl.className=`progress-fill ${isOver?'pf-over':isWarn?'pf-warn':'pf-ok'}`;
+    }
+    if(labelEl){
+      labelEl.textContent=isOver?'¡Tiempo agotado!':isWarn?'⚡ Terminando pronto':'En descanso';
+    }
+
+    row.classList.remove('running','overtime','returned');
+    row.classList.add(isOver?'overtime':'running');
+    const iconEl=row.querySelector('.break-icon');
+    if(iconEl){
+      if(isOver){iconEl.className='break-icon bi-overtime';iconEl.innerHTML='<i class="ti ti-alarm"></i>';}
+      else{iconEl.className='break-icon bi-running';iconEl.innerHTML='<i class="ti ti-player-play"></i>';}
+    }
+
+    // Show/update overtime banner with "Ya regrese" button
+    let banner=document.getElementById(`ot-banner-${b.key}`);
+    if(isOver){
+      if(!banner){
+        // Create banner if not exists
+        const div=document.createElement('div');
+        div.className='overtime-banner';div.id=`ot-banner-${b.key}`;
+        wrap.insertAdjacentElement('afterend',div);
+        banner=div;
+      }
+      banner.style.display='flex';
+      banner.innerHTML=`<span><i class="ti ti-alert-triangle" style="font-size:16px;vertical-align:-2px;margin-right:4px"></i>¡Tiempo excedido! +${fmtCountdown(remaining)}</span><button class="btn-return" onclick="doReturn('${b.key}',this)"><i class="ti ti-login-2" style="font-size:13px"></i> Ya regresé</button>`;
+    } else {
+      if(banner)banner.style.display='none';
+    }
+
+    // Show "Ya regrese" button during running too (inside countdown bar)
+    let retBtn=document.getElementById(`ret-btn-${b.key}`);
+    if(!isOver){
+      if(!retBtn){
+        const inner=wrap.querySelector('.countdown-inner');
+        if(inner){
+          const btn=document.createElement('button');
+          btn.className='btn-return';btn.id=`ret-btn-${b.key}`;
+          btn.style.cssText='width:100%;margin-top:8px;border-radius:var(--radius-xs);padding:8px;';
+          btn.innerHTML=`<i class="ti ti-login-2" style="font-size:13px"></i> Ya regresé`;
+          btn.onclick=()=>doReturn(b.key,btn);
+          inner.appendChild(btn);
+        }
+      }
+    }
+
+    if(isOver){triggerAlarm(workerName,b.key,b.label,elapsed>totalSecs+5);}
+    if(remaining>0&&remaining<=120&&remaining>119){
+      const warnId=`warn_${today()}_${workerName}_${b.key}`;
+      if(!alarmFiredToday[warnId]){alarmFiredToday[warnId]=true;playWarningBeep();}
+    }
+  });
+}
+
+// ── VIEW SWITCHING ─────────────────────────────────────────────────────────
+function setView(v){
+  view=v;
+  document.getElementById('vt-w').classList.toggle('active',v==='worker');
+  document.getElementById('vt-a').classList.toggle('active',v==='admin');
+  document.getElementById('v-worker').style.display=v==='worker'?'':'none';
+  document.getElementById('v-admin').style.display=v==='admin'?'':'none';
+  if(v==='worker')renderWorker();else renderAdmin();
+}
+
+// ── WORKER VIEW ────────────────────────────────────────────────────────────
+async function renderWorker(){
+  const el=document.getElementById('v-worker');
+  if(!workerName){
+    const workers=await getWorkers();
+    if(!workers.length){el.innerHTML=`<div class="empty"><i class="ti ti-users"></i><p>Sin trabajadores registrados.<br>La administradora debe agregarlos primero.</p></div>`;return;}
+    const opts=workers.map(w=>`<option value="${esc(w)}">${esc(w)}</option>`).join('');
+    el.innerHTML=`<div class="selector-wrap fi">
+      <span class="selector-emoji">👋</span>
+      <h2>¡Buen día! ¿Quién eres?</h2>
+      <p>Selecciona tu nombre para registrar tus descansos de hoy</p>
+      <select id="wsel" style="margin-bottom:10px"><option value="">— Selecciona tu nombre —</option>${opts}</select>
+      <button class="btn btn-primary" onclick="doSelectWorker()"><i class="ti ti-arrow-right"></i> Continuar</button>
+    </div>`;
+    return;
+  }
+  const recs=await getRecs(today());
+  const my=recs[workerName]||{};
+  const allDone=BREAKS.every(b=>my[b.key]);
+  const cards=BREAKS.map(b=>{
+    const done=my[b.key];
+    const ts=my[b.key+'_ts'];
+    const elapsed=(done&&ts)?getSecondsElapsed(ts):0;
+    const totalSecs=b.mins*60;
+    const remaining=totalSecs-elapsed;
+    const isOver=done&&remaining<=0;
+    const isRunning=done&&!isOver;
+    const pct=done?Math.min(100,Math.max(0,(elapsed/totalSecs)*100)):0;
+    const isWarn=isRunning&&remaining<=120;
+
+    let rowClass='break-row';
+    if(!done)rowClass='break-row';
+    else if(isOver)rowClass='break-row overtime';
+    else rowClass='break-row running';
+
+    let iconClass=b.ic,iconI=b.icon;
+    if(done){
+      if(isOver){iconClass='bi-overtime';iconI='ti-alarm';}
+      else if(isRunning){iconClass='bi-running';iconI='ti-player-play';}
+      else{iconClass='bi-done';iconI='ti-check';}
+    }
+
+    const ret=my[b.key+'_ret'];
+    const isReturned=done&&!!ret;
+
+    // Recalculate states considering returned
+    const rowClass2=!done?'break-row':isReturned?'break-row returned':isOver?'break-row overtime':'break-row running';
+    const iconClass2=!done?b.ic:isReturned?'bi-done':isOver?'bi-overtime':'bi-running';
+    const iconI2=!done?b.icon:isReturned?'ti-check':isOver?'ti-alarm':'ti-player-play';
+
+    const cdHtml=done?`
+      <div class="countdown-wrap" id="cd-wrap-${b.key}" data-ts="${ts||0}" data-ret="${ret?'1':'0'}">
+        ${!isReturned?`<div class="countdown-inner">
+          <div class="countdown-top">
+            <span class="countdown-label"><i class="ti ti-timer" style="font-size:13px"></i> <span class="cd-status">${isOver?'¡Tiempo agotado!':isWarn?'⚡ Terminando pronto':'En descanso'}</span></span>
+            <span class="countdown-time ${isOver?'over':isWarn?'warn':''}">${isOver?'+'+fmtCountdown(remaining):fmtCountdown(remaining)}</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill ${isOver?'pf-over':isWarn?'pf-warn':'pf-ok'}" style="width:${pct}%"></div>
+          </div>
+        </div>`:''}
+      </div>
+      ${isReturned
+        ?`<div class="returned-footer"><i class="ti ti-circle-check" style="font-size:18px"></i> Regresaste a las ${ret} — ¡Todo en orden!</div>`
+        :isOver
+          ?`<div class="overtime-banner" id="ot-banner-${b.key}">
+              <span><i class="ti ti-alert-triangle" style="font-size:16px;vertical-align:-2px;margin-right:4px"></i>¡Tiempo excedido! +${fmtCountdown(remaining)}</span>
+              <button class="btn-return" onclick="doReturn('${b.key}',this)"><i class="ti ti-login-2" style="font-size:13px"></i> Ya regresé</button>
+            </div>`
+          :`<div id="ot-banner-${b.key}" style="display:none"></div>`
+      }`
+    :`<div id="cd-wrap-${b.key}" data-ts="0" data-ret="0"></div><div id="ot-banner-${b.key}" style="display:none"></div>`;
+
+    return `<div class="${rowClass2}" id="row-${b.key}">
+      <div class="break-top">
+        <div class="break-left">
+          <div class="break-icon ${iconClass2}" id="bicon-${b.key}"><i class="ti ${iconI2}"></i></div>
+          <div>
+            <div class="break-label">${b.label}</div>
+            <div class="break-sub">${b.sub}</div>
+          </div>
+        </div>
+        ${done
+          ?`<span class="time-chip">${done}</span>`
+          :`<button class="btn-mark" onclick="doMark('${b.key}',this)"><i class="ti ti-plus" style="font-size:12px"></i> Marcar</button>`
+        }
+      </div>
+      ${cdHtml}
+    </div>`;
+  }).join('');
+
+  const banner=allDone&&BREAKS.every(b=>my[b.key]&&(getSecondsElapsed(my[b.key])<b.mins*60))?''
+    : allDone?'':
+    ``;
+
+  el.innerHTML=`<div class="worker-header">
+    <div class="worker-pill">
+      <div class="worker-avatar">${initials(workerName)}</div>
+      <div>
+        <div class="worker-name-text">${esc(workerName)}</div>
+        <div class="worker-date-text">${fmtDate(today())}</div>
+      </div>
+    </div>
+    <button class="btn-chg" onclick="changeWorker()"><i class="ti ti-refresh" style="font-size:11px"></i> Cambiar</button>
+  </div>
+  <div class="breaks-list fi">${cards}</div>`;
+}
+
+function doSelectWorker(){
+  // Unlock audio on user gesture
+  try{getAudioCtx();}catch{}
+  const v=document.getElementById('wsel')?.value;
+  if(v){workerName=v;renderWorker();}
+}
+function changeWorker(){workerName='';renderWorker();}
+async function doMark(key,btn){
+  try{getAudioCtx();}catch{}
+  btn.disabled=true;btn.innerHTML='<i class="ti ti-loader-2" style="font-size:13px;animation:spin .6s linear infinite"></i>';
+  const ok=await markBreak(workerName,key);
+  if(ok)renderWorker();else{btn.disabled=false;btn.innerHTML='<i class="ti ti-plus" style="font-size:12px"></i> Marcar';}
+}
+
+async function doReturn(key,btn){
+  if(btn){btn.disabled=true;btn.innerHTML='<i class="ti ti-loader-2" style="font-size:13px;animation:spin .6s linear infinite"></i>';}
+  const ok=await markReturn(workerName,key);
+  if(ok)renderWorker();
+  else if(btn){btn.disabled=false;btn.innerHTML='<i class="ti ti-login-2" style="font-size:13px"></i> Ya regresé';}
+}
+// ── ADMIN VIEW ─────────────────────────────────────────────────────────────
+async function renderAdmin(){
+  const el=document.getElementById('v-admin');
+  if(!adminIn){
+    el.innerHTML=`<div class="login-wrap fi">
+      <div class="lock-icon" style="width:68px;height:68px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:20px;margin:0 auto 18px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(245,158,11,0.25)"><i class="ti ti-lock" style="font-size:32px;color:#1a0f00"></i></div>
+      <h2 style="font-size:20px;font-weight:700;color:var(--text);margin-bottom:5px">Panel Administrativo</h2>
+      <p style="font-size:13px;color:var(--text3);margin-bottom:22px">Acceso exclusivo para la jefe del equipo</p>
+      <input type="password" id="pin" placeholder="Contraseña" onkeydown="if(event.key==='Enter')doLogin()" style="text-align:center;letter-spacing:0.12em;font-size:16px;margin-bottom:4px">
+      <div class="err" id="perr"></div>
+      <button class="btn btn-primary mt8" onclick="doLogin()"><i class="ti ti-login"></i> Ingresar</button>
+    </div>`;
+    return;
+  }
+  const tabs=[{k:'records',label:'Registros',icon:'ti-clipboard-list'},{k:'workers',label:'Equipo',icon:'ti-users'},{k:'settings',label:'Ajustes',icon:'ti-settings'}];
+  const bar=`<div class="admin-subtabs">${tabs.map(t=>`<button class="astab${adminTab===t.k?' active':''}" onclick="setAdminTab('${t.k}')"><i class="ti ${t.icon}"></i>${t.label}</button>`).join('')}</div>`;
+  let body='';
+  if(adminTab==='records'){
+    const workers=await getWorkers();
+    const recs=await getRecs(viewDate);
+    const isToday=viewDate===today();
+    const counts=BREAKS.map(b=>workers.filter(w=>recs[w]?.[b.key]).length);
+    const rows=workers.length===0
+      ?`<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text3)">Sin trabajadores registrados</td></tr>`
+      :workers.map(w=>{
+        const r=recs[w]||{};
+        const cell=v=>v?`<span class="badge-yes">${v}</span>`:`<span class="badge-no">·</span>`;
+        return `<tr><td><div style="display:flex;align-items:center;gap:8px"><div class="wa" style="width:28px;height:28px;font-size:11px">${initials(w)}</div><strong>${esc(w)}</strong></div></td><td>${cell(r.bm)}</td><td>${cell(r.al)}</td><td>${cell(r.bt)}</td></tr>`;
+      }).join('');
+    body=`<div class="pad fi">
+      <div class="date-nav">
+        <button class="date-nav-btn" onclick="navDate(-1)"><i class="ti ti-chevron-left"></i></button>
+        <div class="date-label">${fmtDate(viewDate)}${isToday?'<span class="today-badge">HOY</span>':''}</div>
+        <button class="date-nav-btn" onclick="navDate(1)" ${isToday?'disabled':''}><i class="ti ti-chevron-right"></i></button>
+      </div>
+      <div class="metrics-row">${BREAKS.map((b,i)=>`<div class="metric-box"><div class="metric-num">${counts[i]}</div><div class="metric-lbl">${b.label}</div></div>`).join('')}</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Trabajador</th><th>☀️ Mañana</th><th>🍽️ Almuerzo</th><th>🌙 Tarde</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>
+    </div>`;
+  } else if(adminTab==='workers'){
+    const workers=await getWorkers();
+    const items=workers.length===0
+      ?`<div class="empty"><i class="ti ti-user-x"></i><p>Aún no hay trabajadores.<br>Agrega al equipo abajo.</p></div>`
+      :workers.map((w,i)=>`<div class="worker-item"><div class="wi-left"><div class="wa">${initials(w)}</div><span class="wi-name">${esc(w)}</span></div><button class="btn btn-sm btn-danger" onclick="removeWorker(${i})"><i class="ti ti-trash"></i></button></div>`).join('');
+    body=`<div class="pad fi"><div class="workers-list">${items}</div><div class="input-row mt12"><input type="text" id="nwi" placeholder="Nombre completo del trabajador" onkeydown="if(event.key==='Enter')addWorker()"><button class="btn-icon" onclick="addWorker()"><i class="ti ti-plus"></i></button></div></div>`;
+  } else if(adminTab==='settings'){
+    const hasFb=!!lsGet(K.fb);
+    const fbHtml=hasFb
+      ?`<div style="margin-bottom:10px"><span class="connected-badge"><i class="ti ti-check" style="font-size:13px"></i> Firebase conectado</span></div><textarea id="fbt" style="height:80px;font-size:11px;resize:vertical">${esc(JSON.stringify(lsGet(K.fb),null,2))}</textarea>`
+      :`<div class="setup-box"><strong>Sin Firebase</strong> — datos solo en este navegador.<br>Para compartir entre PCs, conecta Firebase.<br>1. Crea proyecto gratis en <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a><br>2. Activa <code>Realtime Database</code> → reglas: <code>".read":true</code><br>3. Pega aquí el JSON de configuración</div><textarea id="fbt" placeholder='{"apiKey":"...","databaseURL":"https://..."}' style="height:80px;font-size:11px;resize:vertical"></textarea>`;
+    body=`<div class="pad fi">
+      <div class="settings-block"><h3><i class="ti ti-building"></i> Nombre de la empresa</h3><div class="input-row" style="margin-top:0"><input type="text" id="cmpIn" value="${esc(getCompany())}"><button class="btn-icon" onclick="saveCompany()"><i class="ti ti-check"></i></button></div></div>
+      <div class="settings-block"><h3><i class="ti ti-lock"></i> Cambiar contraseña</h3><input type="password" id="np1" placeholder="Nueva contraseña" style="margin-bottom:6px"><input type="password" id="np2" placeholder="Confirmar contraseña"><div id="pmsg" class="ok-msg"></div><button class="btn btn-primary" onclick="changePwd()"><i class="ti ti-lock-check"></i> Guardar contraseña</button></div>
+      <div class="settings-block"><h3><i class="ti ti-database"></i> Firebase — Sync en tiempo real</h3>${fbHtml}<button class="btn btn-ghost mt8" onclick="saveFb()"><i class="ti ti-plug"></i> Conectar Firebase</button></div>
+      <button class="btn btn-ghost" onclick="doLogout()"><i class="ti ti-logout"></i> Cerrar sesión</button>
+    </div>`;
+  }
+  el.innerHTML=bar+body;
+}
+
+function doLogin(){const v=document.getElementById('pin')?.value||'';if(v===getPwd()){adminIn=true;renderAdmin();}else{const e=document.getElementById('perr');if(e)e.textContent='Contraseña incorrecta.';}}
+function doLogout(){adminIn=false;renderAdmin();}
+function setAdminTab(t){adminTab=t;renderAdmin();}
+function navDate(dir){const d=new Date(viewDate+'T12:00:00');d.setDate(d.getDate()+dir);const nd=d.toISOString().split('T')[0];if(nd>today())return;viewDate=nd;renderAdmin();}
+async function addWorker(){const inp=document.getElementById('nwi');const name=inp?.value.trim();if(!name)return;const workers=await getWorkers();if(!workers.includes(name)){workers.push(name);await saveWorkers(workers);}if(inp)inp.value='';renderAdmin();}
+async function removeWorker(i){if(!confirm('¿Eliminar este trabajador del sistema?'))return;const workers=await getWorkers();workers.splice(i,1);await saveWorkers(workers);renderAdmin();}
+function changePwd(){const p1=document.getElementById('np1')?.value;const p2=document.getElementById('np2')?.value;const msg=document.getElementById('pmsg');if(!p1||!p2){if(msg){msg.style.color='var(--red)';msg.textContent='Completa ambos campos.';}return;}if(p1!==p2){if(msg){msg.style.color='var(--red)';msg.textContent='Las contraseñas no coinciden.';}return;}setPwd(p1);if(msg){msg.style.color='var(--green)';msg.textContent='✓ Contraseña guardada.';}}
+function saveCompany(){const v=document.getElementById('cmpIn')?.value.trim();if(v){setCompany(v);document.getElementById('company-sub').textContent=v;renderAdmin();}}
+async function saveFb(){const raw=document.getElementById('fbt')?.value.trim();try{const cfg=JSON.parse(raw);lsSet(K.fb,cfg);const ok=await initFirebase();if(ok){alert('✅ Firebase conectado.');renderAdmin();}else alert('❌ No se pudo conectar. Verifica la config y las reglas.');}catch{alert('❌ JSON inválido. Verifica el formato.');}}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+async function init(){
+  viewDate=today();
+  document.getElementById('company-sub').textContent=getCompany();
+  await initFirebase();
+  renderWorker();
+  // Countdown tick every second
+  setInterval(updateCountdowns,1000);
+}
+init();
+</script>
+</body>
+</html>
