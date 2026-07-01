@@ -6,6 +6,7 @@
 <title>Control de Descansos</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.10.0/dist/tabler-icons.min.css">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -654,6 +655,10 @@ async function renderAdmin(){
         <button class="date-nav-btn" onclick="navDate(1)" ${isToday?'disabled':''}><i class="ti ti-chevron-right"></i></button>
       </div>
       <div class="metrics-row">${BREAKS.map((b,i)=>`<div class="metric-box"><div class="metric-num">${counts[i]}</div><div class="metric-lbl">${b.label}</div></div>`).join('')}</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button class="btn btn-ghost" style="flex:1" onclick="exportExcelDay('${viewDate}')"><i class="ti ti-file-spreadsheet"></i> Exportar día</button>
+        <button class="btn btn-ghost" style="flex:1" onclick="exportExcelMonth('${viewDate}')"><i class="ti ti-calendar-stats"></i> Exportar mes</button>
+      </div>
       <div class="table-wrap"><table>
         <thead><tr><th>Trabajador</th><th>☀️ Mañana</th><th>🍽️ Almuerzo</th><th>🌙 Tarde</th></tr></thead>
         <tbody>${rows}</tbody>
@@ -689,6 +694,62 @@ async function removeWorker(i){if(!confirm('¿Eliminar este trabajador del siste
 function changePwd(){const p1=document.getElementById('np1')?.value;const p2=document.getElementById('np2')?.value;const msg=document.getElementById('pmsg');if(!p1||!p2){if(msg){msg.style.color='var(--red)';msg.textContent='Completa ambos campos.';}return;}if(p1!==p2){if(msg){msg.style.color='var(--red)';msg.textContent='Las contraseñas no coinciden.';}return;}setPwd(p1);if(msg){msg.style.color='var(--green)';msg.textContent='✓ Contraseña guardada.';}}
 function saveCompany(){const v=document.getElementById('cmpIn')?.value.trim();if(v){setCompany(v);document.getElementById('company-sub').textContent=v;renderAdmin();}}
 async function saveFb(){const raw=document.getElementById('fbt')?.value.trim();try{const cfg=JSON.parse(raw);lsSet(K.fb,cfg);const ok=await initFirebase();if(ok){alert('✅ Firebase conectado.');renderAdmin();}else alert('❌ No se pudo conectar. Verifica la config y las reglas.');}catch{alert('❌ JSON inválido. Verifica el formato.');}}
+
+// ── EXCEL EXPORT ───────────────────────────────────────────────────────────
+function formatRow(worker, rec) {
+  const cell = (key) => rec[key] ? rec[key] : '—';
+  return {
+    'Trabajador': worker,
+    'Brake Mañana': cell('bm'),
+    'Regreso Mañana': cell('bm_ret'),
+    'Almuerzo': cell('al'),
+    'Regreso Almuerzo': cell('al_ret'),
+    'Brake Tarde': cell('bt'),
+    'Regreso Tarde': cell('bt_ret'),
+  };
+}
+
+async function exportExcelDay(date) {
+  const workers = await getWorkers();
+  const recs = await getRecs(date);
+  if (!workers.length) { alert('No hay trabajadores registrados.'); return; }
+
+  const data = workers.map(w => ({ 'Fecha': fmtDate(date), ...formatRow(w, recs[w] || {}) }));
+  const ws = XLSX.utils.json_to_sheet(data);
+  // Column widths
+  ws['!cols'] = [16,18,18,18,18,18,18,18].map(w=>({wch:w}));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Descansos');
+  XLSX.writeFile(wb, `descansos_${date}.xlsx`);
+}
+
+async function exportExcelMonth(anyDate) {
+  const [y, m] = anyDate.split('-');
+  const daysInMonth = new Date(y, m, 0).getDate();
+  const workers = await getWorkers();
+  if (!workers.length) { alert('No hay trabajadores registrados.'); return; }
+
+  const allRows = [];
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const recs = await getRecs(date);
+    const hasData = Object.keys(recs).length > 0;
+    if (!hasData) continue;
+    workers.forEach(w => {
+      if (recs[w]) {
+        allRows.push({ 'Fecha': fmtDate(date), ...formatRow(w, recs[w]) });
+      }
+    });
+  }
+
+  if (!allRows.length) { alert('No hay registros en este mes.'); return; }
+  const ws = XLSX.utils.json_to_sheet(allRows);
+  ws['!cols'] = [20,18,18,18,18,18,18,18].map(w=>({wch:w}));
+  const wb = XLSX.utils.book_new();
+  const mNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  XLSX.utils.book_append_sheet(wb, ws, mNames[parseInt(m)-1]);
+  XLSX.writeFile(wb, `descansos_${mNames[parseInt(m)-1]}_${y}.xlsx`);
+}
 
 // ── INIT ──────────────────────────────────────────────────────────────────
 async function init(){
